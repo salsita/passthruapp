@@ -155,7 +155,12 @@ inline HRESULT CMetaFactory<Factory, Protocol, FactoryComObject>::
 	{
 		p->SetVoid(pv);
 		p->InternalFinalConstructAddRef();
-		hr = p->FinalConstruct();
+		// MG: Updated to conform to more recent ATL version.
+		hr = p->_AtlInitialConstruct();
+		if (SUCCEEDED(hr))
+			hr = p->FinalConstruct();
+		if (SUCCEEDED(hr))
+			hr = p->_AtlFinalConstruct();
 		p->InternalFinalConstructRelease();
 		if (FAILED(hr))
 		{

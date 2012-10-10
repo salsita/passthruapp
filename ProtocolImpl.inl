@@ -177,6 +177,13 @@ inline STDMETHODIMP IInternetProtocolImpl::SetTargetUnknown(
 		return hr;
 	}
 
+	hr = m_spInternetProtocol->QueryInterface(&m_spInternetProtocolEx);
+	ATLASSERT(FAILED(hr) || m_spInternetProtocolEx != 0);
+	if (FAILED(hr))
+	{
+		return hr;
+	}
+
 	ATLASSERT(m_spInternetProtocolInfo == 0);
 	ATLASSERT(m_spInternetPriority == 0);
 	ATLASSERT(m_spInternetThreadSwitch == 0);
@@ -191,11 +198,14 @@ inline void IInternetProtocolImpl::ReleaseAll()
 {
 	m_spInternetProtocolUnk.Release();
 	m_spInternetProtocol.Release();
+	m_spInternetProtocolEx.Release();
 	m_spInternetProtocolInfo.Release();
 	m_spInternetPriority.Release();
 	m_spInternetThreadSwitch.Release();
 	m_spWinInetInfo.Release();
 	m_spWinInetHttpInfo.Release();
+	m_spWinInetCacheHints.Release();
+	m_spWinInetCacheHints2.Release();
 }
 
 // IInternetProtocolRoot
@@ -294,6 +304,21 @@ inline STDMETHODIMP IInternetProtocolImpl::UnlockRequest()
 	ATLASSERT(m_spInternetProtocol != 0);
 	return m_spInternetProtocol ?
 		m_spInternetProtocol->UnlockRequest() :
+		E_UNEXPECTED;
+}
+
+// IInternetProtocolEx
+
+inline STDMETHODIMP IInternetProtocolImpl::StartEx(
+	IUri *pUri,
+	IInternetProtocolSink *pOIProtSink,
+	IInternetBindInfo *pOIBindInfo,
+	DWORD grfPI,
+	HANDLE_PTR dwReserved)
+{
+	ATLASSERT(m_spInternetProtocolEx != 0);
+	return m_spInternetProtocolEx ?
+		m_spInternetProtocolEx->StartEx(pUri, pOIProtSink, pOIBindInfo, grfPI, dwReserved) :
 		E_UNEXPECTED;
 }
 
@@ -413,18 +438,45 @@ inline STDMETHODIMP IInternetProtocolImpl::QueryInfo(
 	/* [in, out] */ DWORD *pdwFlags,
 	/* [in, out] */ DWORD *pdwReserved)
 {
-	ATLASSERT(m_spWinInetHttpInfo  != 0);
+	ATLASSERT(m_spWinInetHttpInfo != 0);
 	return m_spWinInetHttpInfo ?
 		m_spWinInetHttpInfo->QueryInfo(dwOption, pBuffer, pcbBuf, pdwFlags,
 			pdwReserved) :
 		E_UNEXPECTED;
 }
 
+// IWinInetCacheHints
+
+inline STDMETHODIMP IInternetProtocolImpl::SetCacheExtension(
+	/* [in] */			LPCWSTR pwzExt,
+	/* [in, out] */ LPVOID pszCacheFile,
+	/* [in, out] */ DWORD *pcbCacheFile,
+	/* [in, out] */ DWORD *pdwWinInetError,
+	/* [in, out] */	DWORD *pdwReserved)
+{
+	 ATLASSERT(m_spWinInetCacheHints2 != NULL);
+	 return m_spWinInetCacheHints2 ?
+		 m_spWinInetCacheHints2->SetCacheExtension(pwzExt, pszCacheFile, pcbCacheFile,
+			pdwWinInetError, pdwReserved) : E_UNEXPECTED;
+}
+
+inline STDMETHODIMP IInternetProtocolImpl::SetCacheExtension2(
+	/* [in] */			LPCWSTR pwzExt,
+	/* [out] */		 WCHAR *pwzCacheFile,
+	/* [in, out] */ DWORD *pcchCacheFile,
+	/* [out] */		 DWORD *pdwWinInetError,
+	/* [out] */		 DWORD *pdwReserved)
+{
+	 ATLASSERT(m_spWinInetCacheHints2 != NULL);
+	 return m_spWinInetCacheHints2 ?
+		 m_spWinInetCacheHints2->SetCacheExtension2(pwzExt, pwzCacheFile, pcchCacheFile,
+			pdwWinInetError, pdwReserved) : E_UNEXPECTED;
+}
+
 // ===== IInternetProtocolSinkImpl =====
 
-inline HRESULT IInternetProtocolSinkImpl::OnStart(LPCWSTR szUrl,
-	IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
-	DWORD grfPI, HANDLE_PTR dwReserved, IInternetProtocol* pTargetProtocol)
+inline HRESULT IInternetProtocolSinkImpl::InitMembers(IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
+	IInternetProtocol* pTargetProtocol)
 {
 	ATLASSERT(pOIProtSink != 0);
 	ATLASSERT(pOIBindInfo != 0);
@@ -448,15 +500,34 @@ inline HRESULT IInternetProtocolSinkImpl::OnStart(LPCWSTR szUrl,
 
 	m_spInternetProtocolSink = pOIProtSink;
 	m_spInternetBindInfo = pOIBindInfo;
+	if (FAILED(m_spInternetBindInfo->QueryInterface(&m_spInternetBindInfoEx)))
+		m_spInternetBindInfoEx = NULL;
 	m_spTargetProtocol = pTargetProtocol;
 	return S_OK;
 }
+
+inline HRESULT IInternetProtocolSinkImpl::OnStart(LPCWSTR szUrl,
+	IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
+	DWORD grfPI, HANDLE_PTR dwReserved, IInternetProtocol* pTargetProtocol)
+{
+	return InitMembers(pOIProtSink, pOIBindInfo, pTargetProtocol);
+}
+
+inline HRESULT IInternetProtocolSinkImpl::OnStartEx(IUri* pUri,
+	IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
+	DWORD grfPI, HANDLE_PTR dwReserved, IInternetProtocol* pTargetProtocol)
+{
+	return InitMembers(pOIProtSink, pOIBindInfo, pTargetProtocol);
+}
+
 
 inline void IInternetProtocolSinkImpl::ReleaseAll()
 {
 	m_spInternetProtocolSink.Release();
 	m_spServiceProvider.Release();
 	m_spInternetBindInfo.Release();
+	m_spInternetBindInfoEx.Release();
+	m_spUriContainer.Release();
 	m_spTargetProtocol.Release();
 }
 
@@ -561,6 +632,28 @@ inline STDMETHODIMP IInternetProtocolSinkImpl::GetBindString(
 		E_UNEXPECTED;
 }
 
+// IInternetBindInfoEx
+inline STDMETHODIMP IInternetProtocolSinkImpl::GetBindInfoEx(
+	DWORD *grfBINDF,
+	BINDINFO *pbindinfo,
+	DWORD *grfBINDF2,
+	DWORD *pdwReserved)
+{
+	ATLASSERT(m_spInternetBindInfoEx != 0);
+	return m_spInternetBindInfoEx ?
+		m_spInternetBindInfoEx->GetBindInfoEx(grfBINDF, pbindinfo,
+			grfBINDF2, pdwReserved) : E_UNEXPECTED;
+}
+
+inline STDMETHODIMP IInternetProtocolSinkImpl::GetIUri(
+	IUri **ppIUri
+)
+{
+	ATLASSERT(m_spUriContainer != 0);
+	return m_spUriContainer ?
+		m_spUriContainer->GetIUri(ppIUri) : E_UNEXPECTED;
+}
+
 // ===== CInternetProtocolSinkWithSP =====
 
 template <class T, class ThreadModel>
@@ -579,6 +672,26 @@ inline HRESULT CInternetProtocolSinkWithSP<T, ThreadModel>::OnStart(
 	if (SUCCEEDED(hr))
 	{
 		pOIProtSink->QueryInterface(&m_spServiceProvider);
+	}
+
+	CComPtr<IInternetProtocolSink> spSink;
+	CComPtr<IInternetBindInfo> spBindInfo;
+	if (SUCCEEDED(hr))
+	{
+		hr = QueryInterface(IID_IInternetProtocolSink,
+			reinterpret_cast<void**>(&spSink));
+		ATLASSERT(SUCCEEDED(hr) && spSink != 0);
+	}
+	if (SUCCEEDED(hr))
+	{
+		hr = QueryInterface(IID_IInternetBindInfo,
+			reinterpret_cast<void**>(&spBindInfo));
+		ATLASSERT(SUCCEEDED(hr) && spBindInfo != 0);
+	}
+	if (SUCCEEDED(hr))
+	{
+		hr = pTargetProtocol->Start(szUrl, spSink, spBindInfo, grfPI,
+			dwReserved);
 	}
 	return hr;
 }
@@ -619,6 +732,22 @@ inline STDMETHODIMP CInternetProtocol<StartPolicy, ThreadModel>::Start(
 
 	return StartPolicy::OnStart(szUrl, pOIProtSink, pOIBindInfo, grfPI,
 		dwReserved, m_spInternetProtocol);
+}
+
+// IInternetProtocolEx
+template <class StartPolicy, class ThreadModel>
+inline STDMETHODIMP CInternetProtocol<StartPolicy, ThreadModel>::StartEx(
+	IUri* pUri, IInternetProtocolSink *pOIProtSink,
+	IInternetBindInfo *pOIBindInfo, DWORD grfPI, HANDLE_PTR dwReserved)
+{
+	ATLASSERT(m_spInternetProtocolEx != 0);
+	if (!m_spInternetProtocolEx)
+	{
+		return E_UNEXPECTED;
+	}
+
+	return StartPolicy::OnStartEx(pUri, pOIProtSink, pOIBindInfo, grfPI,
+		dwReserved, m_spInternetProtocolEx);
 }
 
 } // end namespace PassthroughAPP
