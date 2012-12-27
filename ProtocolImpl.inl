@@ -673,25 +673,25 @@ inline HRESULT CInternetProtocolSinkWithSP<T, ThreadModel>::OnStart(
 	{
 		pOIProtSink->QueryInterface(&m_spServiceProvider);
 	}
+	return hr;
+}
 
-	CComPtr<IInternetProtocolSink> spSink;
-	CComPtr<IInternetBindInfo> spBindInfo;
-	if (SUCCEEDED(hr))
+template <class T, class ThreadModel>
+inline HRESULT CInternetProtocolSinkWithSP<T, ThreadModel>::OnStartEx(
+	IUri* pUri, IInternetProtocolSink *pOIProtSink,
+	IInternetBindInfo *pOIBindInfo,	DWORD grfPI, HANDLE_PTR dwReserved,
+	IInternetProtocol* pTargetProtocol)
+{
+	ATLASSERT(m_spServiceProvider == 0);
+	if (m_spServiceProvider)
 	{
-		hr = QueryInterface(IID_IInternetProtocolSink,
-			reinterpret_cast<void**>(&spSink));
-		ATLASSERT(SUCCEEDED(hr) && spSink != 0);
+		return E_UNEXPECTED;
 	}
+	HRESULT hr = BaseClass::OnStartEx(pUri, pOIProtSink, pOIBindInfo, grfPI,
+		dwReserved, pTargetProtocol);
 	if (SUCCEEDED(hr))
 	{
-		hr = QueryInterface(IID_IInternetBindInfo,
-			reinterpret_cast<void**>(&spBindInfo));
-		ATLASSERT(SUCCEEDED(hr) && spBindInfo != 0);
-	}
-	if (SUCCEEDED(hr))
-	{
-		hr = pTargetProtocol->Start(szUrl, spSink, spBindInfo, grfPI,
-			dwReserved);
+		pOIProtSink->QueryInterface(&m_spServiceProvider);
 	}
 	return hr;
 }

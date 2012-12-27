@@ -379,6 +379,9 @@ public:
 	HRESULT OnStart(LPCWSTR szUrl, IInternetProtocolSink *pOIProtSink,
 		IInternetBindInfo *pOIBindInfo, DWORD grfPI, HANDLE_PTR dwReserved,
 		IInternetProtocol* pTargetProtocol);
+	HRESULT OnStartEx(IUri* pUri, IInternetProtocolSink *pOIProtSink,
+		IInternetBindInfo *pOIBindInfo, DWORD grfPI, HANDLE_PTR dwReserved,
+		IInternetProtocol* pTargetProtocol);
 
 	STDMETHODIMP QueryService(REFGUID guidService, REFIID riid, void** ppv);
 
