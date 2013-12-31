@@ -132,7 +132,16 @@ inline HRESULT CComPolyObjectSharedRef<Contained>::FinalConstruct()
 	InternalAddRef();
 	CComObjectRootEx<Contained::_ThreadModel::ThreadModelNoCS>::
 		FinalConstruct();
-	HRESULT hr = m_contained.FinalConstruct();
+	HRESULT hr;
+#if _ATL_VER >= 0x800
+	hr = m_contained._AtlInitialConstruct();  // gears - added by andreip
+	if (SUCCEEDED(hr))
+#endif
+		hr = m_contained.FinalConstruct();
+#if _ATL_VER >= 0x800
+	if (SUCCEEDED(hr))
+		hr = m_contained._AtlFinalConstruct();  // gears - added by andreip
+#endif
 	InternalRelease();
 	return hr;
 }
@@ -299,7 +308,16 @@ inline HRESULT CComObjectProtSink<ProtocolObject, SinkObject>::
 	m_refCount.InternalAddRef();
 	m_refCount.FinalConstruct();
 	HRESULT hr = ProtocolObject::FinalConstruct();
-	HRESULT hrSink = m_sink.FinalConstruct();
+	HRESULT hrSink;
+#if _ATL_VER >= 0x800
+	hrSink = m_sink._AtlInitialConstruct();  // gears - added by zork
+	if (SUCCEEDED(hrSink))
+#endif
+		hrSink = m_sink.FinalConstruct();
+#if _ATL_VER >= 0x800
+	if (SUCCEEDED(hrSink))
+		hrSink = m_sink._AtlFinalConstruct();  // gears - added by zork
+#endif
 	if (SUCCEEDED(hr) && FAILED(hrSink))
 	{
 		hr = hrSink;
