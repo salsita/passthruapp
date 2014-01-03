@@ -134,13 +134,13 @@ inline HRESULT CComPolyObjectSharedRef<Contained>::FinalConstruct()
 		FinalConstruct();
 	HRESULT hr;
 #if _ATL_VER >= 0x800
-	hr = m_contained._AtlInitialConstruct();  // gears - added by andreip
+	hr = m_contained._AtlInitialConstruct();
 	if (SUCCEEDED(hr))
 #endif
 		hr = m_contained.FinalConstruct();
 #if _ATL_VER >= 0x800
 	if (SUCCEEDED(hr))
-		hr = m_contained._AtlFinalConstruct();  // gears - added by andreip
+		hr = m_contained._AtlFinalConstruct();
 #endif
 	InternalRelease();
 	return hr;
@@ -310,13 +310,13 @@ inline HRESULT CComObjectProtSink<ProtocolObject, SinkObject>::
 	HRESULT hr = ProtocolObject::FinalConstruct();
 	HRESULT hrSink;
 #if _ATL_VER >= 0x800
-	hrSink = m_sink._AtlInitialConstruct();  // gears - added by zork
+	hrSink = m_sink._AtlInitialConstruct();
 	if (SUCCEEDED(hrSink))
 #endif
 		hrSink = m_sink.FinalConstruct();
 #if _ATL_VER >= 0x800
 	if (SUCCEEDED(hrSink))
-		hrSink = m_sink._AtlFinalConstruct();  // gears - added by zork
+		hrSink = m_sink._AtlFinalConstruct();
 #endif
 	if (SUCCEEDED(hr) && FAILED(hrSink))
 	{
