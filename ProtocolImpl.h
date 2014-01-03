@@ -342,7 +342,7 @@ public:
 	CComPtr<IInternetProtocol> m_spTargetProtocol;
 };
 
-template <class ThreadModel = CComSingleThreadModel>
+template <class ThreadModel = CComMultiThreadModel>
 class CInternetProtocolSinkTM :
 	public CComObjectRootEx<ThreadModel>,
 	public IInternetProtocolSinkImpl
@@ -370,7 +370,7 @@ public:
 
 typedef CInternetProtocolSinkTM<> CInternetProtocolSink;
 
-template <class T, class ThreadModel = CComSingleThreadModel>
+template <class T, class ThreadModel = CComMultiThreadModel>
 class CInternetProtocolSinkWithSP :
 	public CInternetProtocolSinkTM<ThreadModel>
 {
@@ -401,7 +401,7 @@ public:
 			GetUnknown(), riid, ppvObject, GetClientServiceProvider()); \
 	}
 
-template <class StartPolicy, class ThreadModel = CComSingleThreadModel>
+template <class StartPolicy, class ThreadModel = CComMultiThreadModel>
 class ATL_NO_VTABLE CInternetProtocol :
 	public CComObjectRootEx<ThreadModel>,
 	public IInternetProtocolImpl,
